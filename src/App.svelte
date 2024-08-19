@@ -21,49 +21,49 @@
  let chart;
 
  async function simulate() {
-   let _sim = new Gillespie(A, I_0, tau, gamma, dt, Tend, seed);
-   let _ = await _sim.simulate();
-   console.log(_);
-   sim = _sim;
+     let _sim = new Gillespie(A, I_0, tau, gamma, dt, Tend, seed);
+     let _ = await _sim.simulate();
+     console.log(_);
+     sim = _sim;
  }
 
  (async () => {
-   await setTimeout(1000);
-   await simulate();
+     await setTimeout(1000);
+     await simulate();
  })();
 
  $: {
-   chart?.firstChild?.remove();
-   chart?.append(Plot.plot({
-     width: 720,
-     inset: 10,
-     color: {
-       domain: ["Susceptible", "Infected", "Recovered"],
-       range: ["green", "red", "grey"],
-       legend: true,
-     },
-     y: { label: "Nodes", grid: true, domain: [0, A.length] },
-     x: { label: "Time" },
-     marks: [
-       //Plot.text(["Interpolated Data"], { frameAnchor: "Top" }),
-       Plot.ruleY([0]),
-       Plot.lineY(sim.data, {
-         x: "time",
-         y: "susceptible",
-         stroke: "green",
-       }),
-       Plot.lineY(sim.data, {
-         x: "time",
-         y: "infected",
-         stroke: "red",
-       }),
-       Plot.lineY(sim.data, {
-         x: "time",
-         y: "recovered",
-         stroke: "grey",
-       }),
-     ],
-   }));
+     chart?.firstChild?.remove();
+     chart?.append(Plot.plot({
+         width: 720,
+         inset: 10,
+         color: {
+             domain: ["Susceptible", "Infected", "Recovered"],
+             range: ["green", "red", "grey"],
+             legend: true,
+         },
+         y: { label: "Nodes", grid: true, domain: [0, A.length] },
+         x: { label: "Time" },
+         marks: [
+             //Plot.text(["Interpolated Data"], { frameAnchor: "Top" }),
+             Plot.ruleY([0]),
+             Plot.lineY(sim.data, {
+                 x: "time",
+                 y: "susceptible",
+                 stroke: "green",
+             }),
+             Plot.lineY(sim.data, {
+                 x: "time",
+                 y: "infected",
+                 stroke: "red",
+             }),
+             Plot.lineY(sim.data, {
+                 x: "time",
+                 y: "recovered",
+                 stroke: "grey",
+             }),
+         ],
+     }));
  }
 </script>
 
@@ -74,8 +74,6 @@
 </header>
 
 <main>
-
-
   {#if sim}
     <div bind:this={chart} role="img" style="margin-top: 2rem"></div>
   {/if}
@@ -88,13 +86,13 @@
     <summary>Simulation Settings</summary>
     <div class="grid">
       <div>
-        <label>Rate of infection</label>
-        <input bind:value={R_0} name="r0">
+        <label>Reproduction number</label>
+        <input bind:value={R_0} name="r0" on:input={()=>simulate()}>
       </div>
 
       <div>
-        <label>Initial infected</label>
-        <input bind:value={I_0} type="number" min=1 max=100 name="i0">
+          <label>Initial infected</label>
+          <input bind:value={I_0} type="number" min=1 max=100 name="i0" on:input={()=>simulate()}>
       </div>
 
 
@@ -104,18 +102,18 @@
       </div>
 
       <div>
-        <label>Time to end</label>
-        <input bind:value={Tend} type="number" step=100 name="tend">
+          <label>Time to end</label>
+          <input bind:value={Tend} type="number" step=100 name="tend" on:input={()=>simulate()}>
       </div>
 
       <div>
-        <label>Discreetisation of time (dt)</label>
-        <input bind:value={dt} name="dt" />
+          <label>Discreetisation of time (dt)</label>
+          <input bind:value={dt} name="dt" on:input={()=>simulate()}/>
       </div>
 
       <div>
-        <label>Seed</label>
-        <input bind:value={seed} name="seed">
+          <label>Seed</label>
+          <input bind:value={seed} name="seed" on:input={()=>simulate()}>
       </div>
 
     </div>
