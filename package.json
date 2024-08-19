@@ -1,0 +1,21 @@
+{
+  "name": "gillespie-simulation",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.1.1",
+    "svelte": "^4.2.18",
+    "vite": "^5.4.1"
+  },
+  "dependencies": {
+    "@observablehq/plot": "^0.6.16",
+    "d3": "^7.9.0",
+    "simpledotcss": "^2.3.2"
+  }
+}
