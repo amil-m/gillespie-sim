@@ -116,7 +116,7 @@ class Gillespie {
           if (rate < 0.000001) break;
 
           // Generate random time for event, d3 returns a function
-          let tstep = this.randomExponential(1 / rate)();
+          let tstep = this.randomExponential(rate)();
           // Add random value to previous step time and append to Time array at current point
           this.T[t] = this.T[t - 1] + tstep;
 
