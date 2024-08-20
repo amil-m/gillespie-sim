@@ -49,6 +49,10 @@ class Gillespie {
     // Intialise individual node states
     this.#initialiseNodes();
 
+    this.rate_vector_history = [[...this.rate_vector]];
+    this.state_history = [[...this.state]];
+    this.event_node_history = [];
+
     // Simulation time taken (ms)
     this.sim_duration = 0;
 
@@ -58,6 +62,7 @@ class Gillespie {
 
   #setSeed() {
     const source = d3.randomLcg(this.seed);
+
     this.shuffle = d3.shuffler(source);
     this.randomUniform = d3.randomUniform.source(source);
     this.randomExponential = d3.randomExponential.source(source);
@@ -66,27 +71,23 @@ class Gillespie {
   #initialiseNodes() {
     // Calculate rate vector for each node
     for (const [index, value] of this.state.entries()) {
-      switch (value) {
+      if (value === 0) {
         // Node is uninfected
-        case 0:
-          // Get neighbours from adjacency matrix
-          let neighbours = this.#findNeighbours(index);
+        // Get neighbours from adjacency matrix
+        let neighbours = this.#findNeighbours(index);
 
-          // Iterate through each neighbour
-          neighbours.forEach((n) => {
-            // Check if they are infected
-            if (this.state[n] === 1) {
-              // Increase rate vector for current node by infection rate (tau)
-              this.rate_vector[index] += this.tau;
-            }
-          });
-          break;
-
+        // Iterate through each neighbour
+        neighbours.forEach((n) => {
+          // Check if they are infected
+          if (this.state[n] === 1) {
+            // Increase rate vector for current node by infection rate (tau)
+            this.rate_vector[index] += this.tau;
+          }
+        });
+      } else if (value === 1) {
         // Infected node
-        case 1:
-          // Set value of rate vector for current node to recovery rate (gamma)
-          this.rate_vector[index] = this.gamma;
-          break;
+        // Set value of rate vector for current node to recovery rate (gamma)
+        this.rate_vector[index] = this.gamma;
       }
     }
   }
@@ -127,9 +128,14 @@ class Gillespie {
 
           // Find index of rate_cumulative where the value is greater than
           // a random number multiplied by rate
-          let event_node = rate_cumulative.findIndex(
-            (val) => val > this.randomUniform(1)() * rate,
-          );
+          let node_rate = this.randomUniform(1)() * rate;
+          let event_node = rate_cumulative.findIndex((val) => val > node_rate);
+
+          if (event_node === -1) {
+            break;
+          }
+
+          this.event_node_history.push(event_node);
 
           // Find susceptible neighbours of event_node
           let neighbours = this.#findNeighbours(event_node);
@@ -138,36 +144,35 @@ class Gillespie {
           );
 
           // Outcomes for infected and uninfected states of event_node
-          switch (this.state[event_node]) {
+          if (this.state[event_node] === 0) {
             // Uninfected
-            case 0:
-              // Update susceptible, infected states
-              this.S[t]--;
-              this.I[t]++;
-              this.state[event_node] = 1;
-              this.rate_vector[event_node] = this.gamma;
+            // Update susceptible, infected states
+            this.S[t]--;
+            this.I[t]++;
+            this.state[event_node] = 1;
+            this.rate_vector[event_node] = this.gamma;
 
-              // Iterate though each susceptible neighbour and increase infection rate (tau)
-              for (const neighbour of susceptible_neighbours) {
-                this.rate_vector[neighbour] += this.tau;
-              }
-              break;
-
+            // Iterate though each susceptible neighbour and increase infection rate (tau)
+            for (const neighbour of susceptible_neighbours) {
+              this.rate_vector[neighbour] += this.tau;
+            }
+          } else if (this.state[event_node] === 1) {
             // Infected
-            case 1:
-              // Node recovers
-              // Update infected, recovered states
-              this.I[t]--;
-              this.R[t]++;
-              this.state[event_node] = 2; // 2 so that the node is not considered again
-              this.rate_vector[event_node] = 0;
+            // Node recovers
+            // Update infected, recovered states
+            this.I[t]--;
+            this.R[t]++;
+            this.state[event_node] = 2; // 2 so that the node is not considered again
+            this.rate_vector[event_node] = 0;
 
-              // Iterate though each susceptible neighbour and decrease infection rates (tau)
-              for (const neighbour of susceptible_neighbours) {
-                this.rate_vector[neighbour] -= this.tau;
-              }
-              break;
+            // Iterate though each susceptible neighbour and decrease infection rates (tau)
+            for (const neighbour of susceptible_neighbours) {
+              this.rate_vector[neighbour] -= this.tau;
+            }
           }
+
+          this.rate_vector_history.push([...this.rate_vector]);
+          this.state_history.push([...this.state]);
 
           // Iterate time counters
           time = this.T[t];
@@ -225,27 +230,40 @@ class Gillespie {
 
     let results = [];
 
-    // For each interpolated point, get the closest point from simulation time (T)
-    for (let point = 0; point < M; point++) {
-      // k=find(T<=(jj-1)*dt,1,'last');
-      // Use scale function to determine time at index
-      const point_time = point * this.dt; // Should this be (point - 1) * dt?
-
-      // Find the last index of Time (T) where the value is less than interpolated time (value)
-      // Implemented as: find first index *greater than* current value and take the index before that
-      let k = this.T.findIndex((t) => t > point_time) - 1;
-      // -2 is returned if it cannot find an index, so replace with last index of Time
-      k = k === -2 ? this.T.at(-1) : k;
-
+    this.T.forEach((value, index) => {
       // Put matching values inside the results array
       results.push({
-        //time: Ti_scale(point),
-        time: point_time,
-        susceptible: this.S[k],
-        infected: this.I[k],
-        recovered: this.R[k],
+        index: index,
+        time: value,
+        susceptible: this.S[index],
+        infected: this.I[index],
+        recovered: this.R[index],
       });
-    }
+    });
+
+    /**
+   // For each interpolated point, get the closest point from simulation time (T)
+   for (let point = 0; point < M; point++) {
+   // k=find(T<=(jj-1)*dt,1,'last');
+   // Use scale function to determine time at index
+   const point_time = point * this.dt; // Should this be (point - 1) * dt?
+
+   // Find the last index of Time (T) where the value is less than interpolated time (value)
+   // Implemented as: find first index *greater than* current value and take the index before that
+   let k = this.T.findIndex((t) => t > point_time) - 1;
+   // -2 is returned if it cannot find an index, so replace with last index of Time
+   k = k === -2 ? this.T.at(-1) : k;
+
+   // Put matching values inside the results array
+   results.push({
+   //time: Ti_scale(point),
+   time: point_time,
+   susceptible: this.S[k],
+   infected: this.I[k],
+   recovered: this.R[k],
+   });
+   }
+  */
 
     // Prepare data for plot by aligning values at element 0
     if (results.length > 0) {
