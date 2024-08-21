@@ -15,7 +15,8 @@
  let gamma = 1 / 5;
  let dt = 0.1;
  let Tend = 50;
- let seed = null
+ let seed = null;
+ let sim_repeat = 100;
 
  let sim = null;
  let sims = null;
@@ -30,7 +31,7 @@
 
      // Create 100 simulation promises
      let promises = [];
-     for (let i = 0; i < 100; i++) {
+     for (let i = 0; i < sim_repeat; i++) {
          let _sim = new Gillespie(A, I_0, tau, gamma, dt, Tend, seed, i);
          promises.push(_sim.simulate())
      }
@@ -120,8 +121,8 @@
             </div>
 
             <div>
-                <label>Seed</label>
-                <input bind:value={seed} name="seed" on:input={()=>simulate()}>
+                <label>Repeat simulations</label>
+                <input bind:value={sim_repeat} name="seed" on:input={()=>simulate()}>
             </div>
 
         </div>
