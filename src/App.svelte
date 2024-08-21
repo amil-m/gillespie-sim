@@ -18,12 +18,10 @@
  let seed = null;
  let sim_repeat = 100;
 
- let sim = null;
  let sims = null;
  let raw_sims = null;
- let average_infections = null;
+ let mean_infections = null;
 
- let marks;
  let chart;
 
  async function simulate() {
@@ -39,16 +37,24 @@
      // Resolve all promises
      sims = await Promise.all(promises)
 
+     // Get raw data and combine from all sims
      raw_sims = [];
      sims.forEach((s)=>{
          raw_sims.push(...s.raw)
      })
 
-     average_infections = [];
+     // Get interpolated values and combine from each sim
+     let interpolated = [];
      sims.forEach((s) => {
-         average_infections.push(...s.interpolated)
+         interpolated.push(...s.interpolated)
      })
 
+     // Group interpolated data by time and average
+     let _infections = d3.rollup(interpolated, v => d3.mean(v, d => d.infected), d => d.time)
+     mean_infections = Array.from(_infections, ([time, mean]) => ({
+         time: time,
+         mean: mean
+     }));
  }
 
  (async () => {
@@ -69,7 +75,13 @@
                  y: "infected",
                  z: "sim",
                  stroke: "#b3b3b3",
-                 strokeOpacity: 0.3
+                 strokeOpacity: 0.2
+             }),
+             Plot.lineY(mean_infections, {
+                 x: "time",
+                 y: "mean",
+                 stroke: "#206095",
+                 strokeWidth: 3
              }),
          ],
      }));
