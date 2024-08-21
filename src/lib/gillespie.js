@@ -60,7 +60,7 @@ class Gillespie {
 
     // Interpolated values of sim
     this.#interpolated_values = null;
-    this.raw_results = [];
+    this.raw_results = null;
   }
 
   #setSeed() {
@@ -276,16 +276,13 @@ class Gillespie {
   }
 
   get data() {
-    // Getter for interpolated values
+    // Getter for simulation results
     if (!this.intepolated_values === null)
       throw new Error("Simulation not started");
-    return this.#interpolated_values;
-  }
-
-  get raw() {
-    // Getter for raw data
-    if (!this.raw_values === null) throw new Error("Simulation not started");
-    return this.#raw_values;
+    return {
+      interpolated: this.#interpolated_values,
+      raw: this.#raw_values,
+    };
   }
 
   #findNeighbours(node) {

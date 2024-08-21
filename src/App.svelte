@@ -47,17 +47,17 @@
          marks: [
              //Plot.text(["SIR Data"], { frameAnchor: "Top" }),
              Plot.ruleY([0]),
-             Plot.lineY(sim.data, {
+             Plot.lineY(sim.data.raw, {
                  x: "time",
                  y: "susceptible",
                  stroke: "green",
              }),
-             Plot.lineY(sim.data, {
+             Plot.lineY(sim.data.raw, {
                  x: "time",
                  y: "infected",
                  stroke: "red",
              }),
-             Plot.lineY(sim.data, {
+             Plot.lineY(sim.data.raw, {
                  x: "time",
                  y: "recovered",
                  stroke: "grey",
