@@ -109,9 +109,9 @@ class Gillespie {
         // Whilst in duration of simulation time (Tend) + 0.5
         while (time <= this.Tend + this.time_increment) {
           // Initialise current state by getting values from previous step
-          this.R[t] = this.R[t - 1]; // Recovered
-          this.I[t] = this.I[t - 1]; // Infected
           this.S[t] = this.S[t - 1]; // Susceptible
+          this.I[t] = this.I[t - 1]; // Infected
+          this.R[t] = this.R[t - 1]; // Recovered
 
           // Calculate total and cumulative sum of rate vector
           let rate = d3.sum(this.rate_vector);
@@ -134,10 +134,10 @@ class Gillespie {
           // a random number multiplied by rate
           let node_rate = this.randomUniform(1)() * rate;
           let event_node = rate_cumulative.findIndex((val) => val > node_rate);
+          this.event_node_history.push(event_node);
 
           // Check that we have an event_node
           if (event_node === -1) break;
-          this.event_node_history.push(event_node);
 
           // Find susceptible neighbours of event_node
           let neighbours = this.#findNeighbours(event_node);
@@ -270,12 +270,6 @@ class Gillespie {
    });
    }
   */
-
-    // Prepare data for plot by aligning values at element 0
-    if (results.length > 0) {
-      results[0].susceptible = results[1].susceptible;
-      results[0].susceptible = results[1].susceptible;
-    }
 
     this.#interpolated_values = results;
   }

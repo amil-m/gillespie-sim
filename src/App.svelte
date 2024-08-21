@@ -43,7 +43,7 @@
              legend: true,
          },
          y: { label: "Nodes", grid: true, domain: [0, A.length] },
-         x: { label: "Time" },
+         x: { label: "Time", domain: [0, Tend] },
          marks: [
              //Plot.text(["Interpolated Data"], { frameAnchor: "Top" }),
              Plot.ruleY([0]),
