@@ -33,8 +33,8 @@ class Gillespie {
     // Arrays to hold states
     this.S = [this.N - I_0]; // Susceptible
     this.I = [I_0]; // Infected
-    this.T = [0]; // Time
     this.R = [0]; // Recovered
+    this.T = [0]; // Time
 
     // Create array representing each node
     // 0 - uninfected, 1 - infected, 2 - recovered
@@ -49,6 +49,7 @@ class Gillespie {
     // Intialise individual node states
     this.#initialiseNodes();
 
+    // Logging
     this.rate_vector_history = [[...this.rate_vector]];
     this.state_history = [[...this.state]];
     this.event_node_history = [];
@@ -177,6 +178,7 @@ class Gillespie {
               break;
           }
 
+          // Logging
           this.rate_vector_history.push([...this.rate_vector]);
           this.state_history.push([...this.state]);
 
