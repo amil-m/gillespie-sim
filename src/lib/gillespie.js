@@ -2,6 +2,7 @@ import * as d3 from "d3";
 
 class Gillespie {
   #interpolated_values = null;
+  #raw_values = null;
   constructor(A, I_0, tau, gamma, dt, Tend, seed = null) {
     /**
        --------------------------------------------------------------------------
@@ -59,11 +60,12 @@ class Gillespie {
 
     // Interpolated values of sim
     this.#interpolated_values = null;
+    this.raw_results = [];
   }
 
   #setSeed() {
+    // Set seeds of random number
     const source = d3.randomLcg(this.seed);
-
     this.shuffle = d3.shuffler(source);
     this.randomUniform = d3.randomUniform.source(source);
     this.randomExponential = d3.randomExponential.source(source);
@@ -225,24 +227,18 @@ class Gillespie {
   }
 
   #interpolateValues() {
-    if (!this.intepolated_values === null)
-      throw new Error("Simulation not started");
     // Interpolation - Produce evenly spaced time points
     // Each time point in simulation does not currently represent a uniform unit of time
 
     // Calculate number of points we need to create
     // M = Tend/dt + 1;
-    let M = Math.floor(this.Tend / this.dt) + 1;
+    let M = Math.floor(this.Tend / this.dt);
 
-    // Create interpolation scale that maps Tend between M points
-    // Ti=linspace(0,Tend,M);
-    // const Ti_scale = d3.scaleLinear().domain([0, M]).range([0, this.Tend]);
-
-    let results = [];
-
+    // Raw results data
+    let raw = [];
     this.T.forEach((value, index) => {
       // Put matching values inside the results array
-      results.push({
+      raw.push({
         index: index,
         time: value,
         susceptible: this.S[index],
@@ -251,31 +247,32 @@ class Gillespie {
       });
     });
 
-    /**
-   // For each interpolated point, get the closest point from simulation time (T)
-   for (let point = 0; point < M; point++) {
-   // k=find(T<=(jj-1)*dt,1,'last');
-   // Use scale function to determine time at index
-   const point_time = point * this.dt; // Should this be (point - 1) * dt?
+    this.#raw_values = raw;
 
-   // Find the last index of Time (T) where the value is less than interpolated time (value)
-   // Implemented as: find first index *greater than* current value and take the index before that
-   let k = this.T.findIndex((t) => t > point_time) - 1;
-   // -2 is returned if it cannot find an index, so replace with last index of Time
-   k = k === -2 ? this.T.at(-1) : k;
+    // For each interpolated point, get the closest point from simulation time (T)
+    let interpolated = [];
+    for (let point = 0; point <= M; point++) {
+      // k=find(T<=(jj-1)*dt,1,'last');
+      // Use scale function to determine time at index
+      const point_time = point * this.dt; // Should this be (point - 1) * dt?
 
-   // Put matching values inside the results array
-   results.push({
-   //time: Ti_scale(point),
-   time: point_time,
-   susceptible: this.S[k],
-   infected: this.I[k],
-   recovered: this.R[k],
-   });
-   }
-  */
+      // Find the last index of Time (T) where the value is less than interpolated time (value)
+      // Implemented as: find first index *greater than* current value and take the index before that
+      let k = this.T.findIndex((t) => t > point_time) - 1;
+      // k is -2 if we cannot find an index, so replace with last index of Time
+      if (k === -2) k = this.T.at(-1);
 
-    this.#interpolated_values = results;
+      // Put matching values inside the results array
+      interpolated.push({
+        //time: Ti_scale(point),
+        time: point_time,
+        susceptible: this.S[k],
+        infected: this.I[k],
+        recovered: this.R[k],
+      });
+    }
+
+    this.#interpolated_values = interpolated;
   }
 
   get data() {
@@ -283,6 +280,12 @@ class Gillespie {
     if (!this.intepolated_values === null)
       throw new Error("Simulation not started");
     return this.#interpolated_values;
+  }
+
+  get raw() {
+    // Getter for raw data
+    if (!this.raw_values === null) throw new Error("Simulation not started");
+    return this.#raw_values;
   }
 
   #findNeighbours(node) {
