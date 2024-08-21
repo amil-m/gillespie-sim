@@ -3,7 +3,7 @@ import * as d3 from "d3";
 class Gillespie {
   #interpolated_values = null;
   #raw_values = null;
-  constructor(A, I_0, tau, gamma, dt, Tend, seed = null) {
+  constructor(A, I_0, tau, gamma, dt, Tend, seed = null, sim = 0) {
     /**
        --------------------------------------------------------------------------
        (A) adj = nxn adjacency matrix
@@ -19,6 +19,9 @@ class Gillespie {
     // Set seed
     this.seed = seed || d3.randomUniform()();
     this.#setSeed();
+
+    // Simulation reference index
+    this.sim = sim;
 
     this.time_increment = 0.5;
 
@@ -49,11 +52,6 @@ class Gillespie {
 
     // Intialise individual node states
     this.#initialiseNodes();
-
-    // Logging
-    this.rate_vector_history = [[...this.rate_vector]];
-    this.state_history = [[...this.state]];
-    this.event_node_history = [];
 
     // Simulation time taken (ms)
     this.sim_duration = 0;
@@ -102,7 +100,7 @@ class Gillespie {
   async simulate() {
     return new Promise(
       function (resolve, reject) {
-        const sim_start = performance.now();
+        let sim_start = performance.now();
 
         // MATLAB uses 1-based indexing (Istvans code started at 2)
         // Start a time step counter at the first step
@@ -137,7 +135,6 @@ class Gillespie {
           // a random number multiplied by rate
           let rand_rate = this.randomUniform(1)() * rate;
           let event_node = rate_cumulative.findIndex((val) => val > rand_rate);
-          this.event_node_history.push(event_node);
 
           // Check that we have an event_node otherwise end sim
           if (event_node === -1) break;
@@ -180,10 +177,6 @@ class Gillespie {
               break;
           }
 
-          // Logging
-          this.rate_vector_history.push([...this.rate_vector]);
-          this.state_history.push([...this.state]);
-
           // Iterate time counters
           time = this.T[t];
           t++;
@@ -195,11 +188,9 @@ class Gillespie {
         // Interpolate values and resolve promise
         this.simulated = true;
         this.#interpolateValues();
-        const sim_end = performance.now();
-        this.sim_duration = sim_end - sim_start;
-        resolve(
-          `Simulation completed in ${this.sim_duration} ms. with seed ${this.seed}`,
-        );
+        //let sim_end = performance.now();
+        //this.sim_duration = sim_end - sim_start;
+        resolve(this.data);
       }.bind(this),
     );
   }
@@ -239,6 +230,7 @@ class Gillespie {
     this.T.forEach((value, index) => {
       // Put matching values inside the results array
       raw.push({
+        sim: this.sim,
         index: index,
         time: value,
         susceptible: this.S[index],
@@ -264,7 +256,7 @@ class Gillespie {
 
       // Put matching values inside the results array
       interpolated.push({
-        //time: Ti_scale(point),
+        sim: this.sim,
         time: point_time,
         susceptible: this.S[k],
         infected: this.I[k],

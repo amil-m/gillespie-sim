@@ -1,5 +1,7 @@
 <script>
  import * as Plot from "@observablehq/plot";
+ import * as d3 from "d3";
+
  import Gillespie from "./lib/gillespie.js";
  import matrix from "./lib/matrix.js";
  import nodesplot from './assets/100_nodes.svg'
@@ -16,15 +18,36 @@
  let seed = null
 
  let sim = null;
+ let sims = null;
+ let raw_sims = null;
+ let average_infections = null;
 
+ let marks;
  let chart;
 
  async function simulate() {
      let tau = (R_0 * gamma) / (k - 1 - R_0);
-     let _sim = new Gillespie(A, I_0, tau, gamma, dt, Tend, seed);
-     let _ = await _sim.simulate();
-     console.log(_);
-     sim = _sim;
+
+     // Create 100 simulation promises
+     let promises = [];
+     for (let i = 0; i < 100; i++) {
+         let _sim = new Gillespie(A, I_0, tau, gamma, dt, Tend, seed, i);
+         promises.push(_sim.simulate())
+     }
+
+     // Resolve all promises
+     sims = await Promise.all(promises)
+
+     raw_sims = [];
+     sims.forEach((s)=>{
+         raw_sims.push(...s.raw)
+     })
+
+     average_infections = [];
+     sims.forEach((s) => {
+         average_infections.push(...s.interpolated)
+     })
+
  }
 
  (async () => {
@@ -37,30 +60,15 @@
      chart?.append(Plot.plot({
          width: 720,
          inset: 10,
-         color: {
-             domain: ["Susceptible", "Infected", "Recovered"],
-             range: ["green", "red", "grey"],
-             legend: true,
-         },
          y: { label: "Nodes", grid: true, domain: [0, A.length] },
          x: { label: "Time", domain: [0, Tend] },
          marks: [
-             //Plot.text(["SIR Data"], { frameAnchor: "Top" }),
-             Plot.ruleY([0]),
-             Plot.lineY(sim.data.raw, {
-                 x: "time",
-                 y: "susceptible",
-                 stroke: "green",
-             }),
-             Plot.lineY(sim.data.raw, {
+             Plot.lineY(raw_sims, {
                  x: "time",
                  y: "infected",
-                 stroke: "red",
-             }),
-             Plot.lineY(sim.data.raw, {
-                 x: "time",
-                 y: "recovered",
-                 stroke: "grey",
+                 z: "sim",
+                 stroke: "#b3b3b3",
+                 strokeOpacity: 0.3
              }),
          ],
      }));
@@ -68,64 +76,64 @@
 </script>
 
 <header>
-  <div>
-    <h1>Gillespie Simulations</h1>
-  </div>
+    <div>
+        <h1>Gillespie Simulations</h1>
+    </div>
 </header>
 
 <main>
-  {#if sim}
-    <div bind:this={chart} role="img" style="margin-top: 2rem"></div>
-  {/if}
+    {#if sims}
+        <div bind:this={chart} role="img" id="chart" style="margin-top: 2rem"></div>
+    {/if}
 
-  <div style="text-align: right; margin-top: 2.5rem">
-    <button on:click={() => simulate()}>Run Simulation</button>
-  </div>
-
-  <details style="margin-top: 1rem;">
-    <summary>Simulation Settings</summary>
-    <div class="grid">
-      <div>
-        <label>Reproduction number</label>
-        <input bind:value={R_0} name="r0" on:input={()=>simulate()}>
-      </div>
-
-      <div>
-          <label>Initial infected</label>
-          <input bind:value={I_0} type="number" min=1 max=100 name="i0" on:input={()=>simulate()}>
-      </div>
-
-
-      <div>
-        <label>Recovery rate (gamma)</label>
-        <input bind:value={gamma} name="gamma" />
-      </div>
-
-      <div>
-          <label>Time to end</label>
-          <input bind:value={Tend} type="number" step=100 name="tend" on:input={()=>simulate()}>
-      </div>
-
-      <div>
-          <label>Discreetisation of time (dt)</label>
-          <input bind:value={dt} name="dt" on:input={()=>simulate()}/>
-      </div>
-
-      <div>
-          <label>Seed</label>
-          <input bind:value={seed} name="seed" on:input={()=>simulate()}>
-      </div>
-
+    <div style="text-align: right; margin-top: 2.5rem">
+        <button on:click={() => simulate()}>Run Simulation</button>
     </div>
-  </details>
+
+    <details style="margin-top: 1rem;">
+        <summary>Simulation Settings</summary>
+        <div class="grid">
+            <div>
+                <label>Reproduction number</label>
+                <input bind:value={R_0} name="r0" on:input={()=>simulate()}>
+            </div>
+
+            <div>
+                <label>Initial infected</label>
+                <input bind:value={I_0} type="number" min=1 max=100 name="i0" on:input={()=>simulate()}>
+            </div>
 
 
-  <section>
-      <h2>Graph Information</h2>
-      <img src={nodesplot} alt="Visualisation of graph">
-      <p>This simulation uses a 100 node random network with a desired average degree of ten. It was produced using the following code:
+            <div>
+                <label>Recovery rate (gamma)</label>
+                <input bind:value={gamma} name="gamma" />
+            </div>
 
-      <pre>import json
+            <div>
+                <label>Time to end</label>
+                <input bind:value={Tend} type="number" step=100 name="tend" on:input={()=>simulate()}>
+            </div>
+
+            <div>
+                <label>Discreetisation of time (dt)</label>
+                <input bind:value={dt} name="dt" on:input={()=>simulate()}/>
+            </div>
+
+            <div>
+                <label>Seed</label>
+                <input bind:value={seed} name="seed" on:input={()=>simulate()}>
+            </div>
+
+        </div>
+    </details>
+
+
+    <section>
+        <h2>Graph Information</h2>
+        <img src={nodesplot} alt="Visualisation of graph">
+        <p>This simulation uses a 100 node random network with a desired average degree of ten. It was produced using the following code:
+
+            <pre>import json
 import networkx as nx
 
 N = 100  # Number of nodes
@@ -139,7 +147,7 @@ G = nx.erdos_renyi_graph(N, p, seed=12345)
 
 # Generate matrix
 json.dumps(nx.adjacency_matrix(G).todense().tolist())</pre>
-  </section>
+    </section>
 
 </main>
 
@@ -149,9 +157,9 @@ json.dumps(nx.adjacency_matrix(G).todense().tolist())</pre>
 
 <style>
  .grid {
-   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-   display: grid;
-   grid-gap: 10px;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     display: grid;
+     grid-gap: 10px;
  }
 
  h2 {
