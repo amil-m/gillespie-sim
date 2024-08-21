@@ -32,7 +32,7 @@
      // Create 100 simulation promises
      let promises = [];
      for (let i = 0; i < sim_repeat; i++) {
-         let _sim = new Gillespie(A, I_0, tau, gamma, dt, Tend, seed, i);
+         let _sim = new Gillespie(A, I_0, tau, gamma, Tend, dt, seed, i);
          promises.push(_sim.simulate())
      }
 
@@ -86,7 +86,7 @@
                  x: "time",
                  y: "mean",
                  stroke: "#206095",
-                 strokeWidth: 3
+                 strokeWidth: 3.5
              }),
              Plot.ruleY([0]),
          ],
@@ -150,7 +150,7 @@
 
             <div>
                 <label>Recovery rate (gamma)</label>
-                <input bind:value={gamma} name="gamma" />
+                <input bind:value={gamma} name="gamma" on:input={()=>simulate()}/>
             </div>
 
             <div>

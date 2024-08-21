@@ -3,7 +3,7 @@ import * as d3 from "d3";
 class Gillespie {
   #interpolated_values = null;
   #raw_values = null;
-  constructor(A, I_0, tau, gamma, dt, Tend, seed = null, sim = 0) {
+  constructor(A, I_0, tau, gamma, Tend, dt = 0.1, seed = null, sim = 0) {
     /**
        --------------------------------------------------------------------------
        (A) adj = nxn adjacency matrix
@@ -100,8 +100,6 @@ class Gillespie {
   async simulate() {
     return new Promise(
       function (resolve, reject) {
-        let sim_start = performance.now();
-
         // MATLAB uses 1-based indexing (Istvans code started at 2)
         // Start a time step counter at the first step
         let t = 1;
@@ -188,8 +186,6 @@ class Gillespie {
         // Interpolate values and resolve promise
         this.simulated = true;
         this.#interpolateValues();
-        //let sim_end = performance.now();
-        //this.sim_duration = sim_end - sim_start;
         resolve(this.data);
       }.bind(this),
     );
@@ -246,7 +242,7 @@ class Gillespie {
     for (let point = 0; point <= M; point++) {
       // k=find(T<=(jj-1)*dt,1,'last');
       // Use scale function to determine time at index
-      const point_time = point * this.dt; // Should this be (point - 1) * dt?
+      const point_time = point * this.dt;
 
       // Find the last index of Time (T) where the value is less than interpolated time (value)
       // Implemented as: find first index *greater than* current value and take the index before that
