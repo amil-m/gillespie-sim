@@ -13,7 +13,7 @@
  let gamma = 1 / 5;
  $:tau = (R_0 * gamma) / (k - 1 - R_0);
  let dt = 0.1;
- let Tend = 1000;
+ let Tend = 50;
  let seed = null
 
  let sim = null;
