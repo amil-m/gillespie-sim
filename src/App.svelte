@@ -21,8 +21,10 @@
  let sims = null;
  let raw_sims = null;
  let mean_infections = null;
+ let final_epidemic_size = null;
 
  let chart;
+ let histogram;
 
  async function simulate() {
      let tau = (R_0 * gamma) / (k - 1 - R_0);
@@ -39,8 +41,11 @@
 
      // Get raw data and combine from all sims
      raw_sims = [];
+     final_epidemic_size = [];
      sims.forEach((s)=>{
          raw_sims.push(...s.raw)
+         // Get the last element from each sim
+         final_epidemic_size.push(s.raw.at(-1))
      })
 
      // Get interpolated values and combine from each sim
@@ -83,9 +88,26 @@
                  stroke: "#206095",
                  strokeWidth: 3
              }),
+             Plot.ruleY([0]),
          ],
      }));
  }
+
+ $: {
+     histogram?.firstChild?.remove();
+     histogram?.append(Plot.plot({
+         width: 720,
+         height: 120,
+         y: { label: "Nodes", grid: true, domain: [0, A.length] },
+         x: { label: "Recovered", domain: [0, A.length] },
+         marks: [
+             Plot.rectY(final_epidemic_size,
+                        Plot.binX({y: "count"}, {x: "recovered", x1: 0, x2: 100, inset: 0})
+             ),
+         ],
+     }));
+ }
+
 </script>
 
 <header>
@@ -96,7 +118,16 @@
 
 <main>
     {#if sims}
-        <div bind:this={chart} role="img" id="chart" style="margin-top: 2rem"></div>
+        <figure>
+            <div bind:this={chart} role="img" id="chart" style="margin-top: 2rem; margin-bottom: 2rem"></div>
+            <figcaption>Infected</figcaption>
+        </figure>
+        <hr/>
+
+        <figure>
+            <div bind:this={histogram} role="img" id="chart" style="margin-top: 2rem"></div>
+            <figcaption>Final Epidemic Size</figcaption>
+        </figure>
     {/if}
 
     <div style="text-align: right; margin-top: 2.5rem">
@@ -125,11 +156,6 @@
             <div>
                 <label>Time to end</label>
                 <input bind:value={Tend} type="number" step=100 name="tend" on:input={()=>simulate()}>
-            </div>
-
-            <div>
-                <label>Discreetisation of time (dt)</label>
-                <input bind:value={dt} name="dt" on:input={()=>simulate()}/>
             </div>
 
             <div>
