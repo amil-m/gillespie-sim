@@ -71,23 +71,27 @@ class Gillespie {
   #initialiseNodes() {
     // Calculate rate vector for each node
     for (const [index, value] of this.state.entries()) {
-      if (value === 0) {
+      switch (value) {
         // Node is uninfected
-        // Get neighbours from adjacency matrix
-        let neighbours = this.#findNeighbours(index);
+        case 0:
+          // Get neighbours from adjacency matrix
+          let neighbours = this.#findNeighbours(index);
 
-        // Iterate through each neighbour
-        neighbours.forEach((n) => {
-          // Check if they are infected
-          if (this.state[n] === 1) {
-            // Increase rate vector for current node by infection rate (tau)
-            this.rate_vector[index] += this.tau;
-          }
-        });
-      } else if (value === 1) {
+          // Iterate through each neighbour
+          neighbours.forEach((n) => {
+            // Check if they are infected
+            if (this.state[n] === 1) {
+              // Increase rate vector for current node by infection rate (tau)
+              this.rate_vector[index] += this.tau;
+            }
+          });
+          break;
+
         // Infected node
-        // Set value of rate vector for current node to recovery rate (gamma)
-        this.rate_vector[index] = this.gamma;
+        case 1:
+          // Set value of rate vector for current node to recovery rate (gamma)
+          this.rate_vector[index] = this.gamma;
+          break;
       }
     }
   }
@@ -131,10 +135,8 @@ class Gillespie {
           let node_rate = this.randomUniform(1)() * rate;
           let event_node = rate_cumulative.findIndex((val) => val > node_rate);
 
-          if (event_node === -1) {
-            break;
-          }
-
+          // Check that we have an event_node
+          if (event_node === -1) break;
           this.event_node_history.push(event_node);
 
           // Find susceptible neighbours of event_node
@@ -144,31 +146,35 @@ class Gillespie {
           );
 
           // Outcomes for infected and uninfected states of event_node
-          if (this.state[event_node] === 0) {
+          switch (this.state[event_node]) {
             // Uninfected
-            // Update susceptible, infected states
-            this.S[t]--;
-            this.I[t]++;
-            this.state[event_node] = 1;
-            this.rate_vector[event_node] = this.gamma;
+            case 0:
+              // Update susceptible, infected states
+              this.S[t]--;
+              this.I[t]++;
+              this.state[event_node] = 1;
+              this.rate_vector[event_node] = this.gamma;
 
-            // Iterate though each susceptible neighbour and increase infection rate (tau)
-            for (const neighbour of susceptible_neighbours) {
-              this.rate_vector[neighbour] += this.tau;
-            }
-          } else if (this.state[event_node] === 1) {
+              // Iterate though each susceptible neighbour and increase infection rate (tau)
+              for (const neighbour of susceptible_neighbours) {
+                this.rate_vector[neighbour] += this.tau;
+              }
+              break;
+
             // Infected
-            // Node recovers
-            // Update infected, recovered states
-            this.I[t]--;
-            this.R[t]++;
-            this.state[event_node] = 2; // 2 so that the node is not considered again
-            this.rate_vector[event_node] = 0;
+            case 1:
+              // Node recovers
+              // Update infected, recovered states
+              this.I[t]--;
+              this.R[t]++;
+              this.state[event_node] = 2; // 2 so that the node is not considered again
+              this.rate_vector[event_node] = 0;
 
-            // Iterate though each susceptible neighbour and decrease infection rates (tau)
-            for (const neighbour of susceptible_neighbours) {
-              this.rate_vector[neighbour] -= this.tau;
-            }
+              // Iterate though each susceptible neighbour and decrease infection rates (tau)
+              for (const neighbour of susceptible_neighbours) {
+                this.rate_vector[neighbour] -= this.tau;
+              }
+              break;
           }
 
           this.rate_vector_history.push([...this.rate_vector]);
