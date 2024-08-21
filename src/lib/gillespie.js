@@ -233,7 +233,7 @@ class Gillespie {
         sim: this.sim,
         index: index,
         time: value,
-        susceptible: this.S[index],
+        //susceptible: this.S[index],
         infected: this.I[index],
         recovered: this.R[index],
       });
@@ -258,9 +258,9 @@ class Gillespie {
       interpolated.push({
         sim: this.sim,
         time: point_time,
-        susceptible: this.S[k],
+        //susceptible: this.S[k],
         infected: this.I[k],
-        recovered: this.R[k],
+        //recovered: this.R[k],
       });
     }
 
