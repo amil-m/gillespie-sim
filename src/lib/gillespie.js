@@ -133,8 +133,8 @@ class Gillespie {
 
           // Find index of rate_cumulative where the value is greater than
           // a random number multiplied by rate
-          let node_rate = this.randomUniform(1)() * rate;
-          let event_node = rate_cumulative.findIndex((val) => val > node_rate);
+          let rand_rate = this.randomUniform(1)() * rate;
+          let event_node = rate_cumulative.findIndex((val) => val > rand_rate);
           this.event_node_history.push(event_node);
 
           // Check that we have an event_node otherwise end sim
@@ -157,8 +157,8 @@ class Gillespie {
               this.rate_vector[event_node] = this.gamma;
 
               // Iterate though each susceptible neighbour and increase infection rate (tau)
-              for (const neighbour of susceptible_neighbours) {
-                this.rate_vector[neighbour] += this.tau;
+              for (const s_n of susceptible_neighbours) {
+                this.rate_vector[s_n] += this.tau;
               }
               break;
 
@@ -172,8 +172,8 @@ class Gillespie {
               this.rate_vector[event_node] = 0;
 
               // Iterate though each susceptible neighbour and decrease infection rates (tau)
-              for (const neighbour of susceptible_neighbours) {
-                this.rate_vector[neighbour] -= this.tau;
+              for (const s_n of susceptible_neighbours) {
+                this.rate_vector[s_n] -= this.tau;
               }
               break;
           }
