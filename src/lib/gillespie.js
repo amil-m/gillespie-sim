@@ -184,7 +184,6 @@ class Gillespie {
         if (time < this.Tend + this.time_increment) this.#extendSimEnd(t);
 
         // Interpolate values and resolve promise
-        this.simulated = true;
         this.#interpolateValues();
         resolve(this.data);
       }.bind(this),
