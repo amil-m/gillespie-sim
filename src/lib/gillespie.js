@@ -187,28 +187,8 @@ class Gillespie {
           t++;
         }
 
-        // Draw straight line if simulation exited before Tend
-        if (time < this.Tend + this.time_increment) {
-          // Get last step of simulation
-          time = this.T[t - 1];
-
-          // Find last S, I and R values
-          let last_S = this.S[t - 1];
-          let last_I = this.I[t - 1];
-          let last_R = this.R[t - 1];
-
-          // Start a loop on the remaining time and draw a straight line to end
-          while (time <= this.Tend + this.time_increment) {
-            // States stay constant
-            this.S[t] = last_S;
-            this.I[t] = last_I;
-            this.R[t] = last_R;
-            // Increment time
-            this.T[t] = this.T[t - 1] + this.time_increment;
-            time = this.T[t];
-            t++;
-          }
-        }
+        // Draw straight line to end if simulation exited before Tend
+        if (time < this.Tend + this.time_increment) this.#extendSimEnd(t);
 
         // Interpolate values and resolve promise
         this.simulated = true;
@@ -220,6 +200,28 @@ class Gillespie {
         );
       }.bind(this),
     );
+  }
+
+  #extendSimEnd(t) {
+    // Get last step of simulation
+    let time = this.T[t - 1];
+
+    // Find last S, I and R values
+    let last_S = this.S[t - 1];
+    let last_I = this.I[t - 1];
+    let last_R = this.R[t - 1];
+
+    // Start a loop on the remaining time and draw a straight line to end
+    while (time <= this.Tend + this.time_increment) {
+      // States stay constant
+      this.S[t] = last_S;
+      this.I[t] = last_I;
+      this.R[t] = last_R;
+      // Increment time
+      this.T[t] = this.T[t - 1] + this.time_increment;
+      time = this.T[t];
+      t++;
+    }
   }
 
   #interpolateValues() {
