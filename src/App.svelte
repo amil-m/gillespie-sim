@@ -11,7 +11,6 @@
 
  let I_0 = 5;
  let gamma = 1 / 5;
- $:tau = (R_0 * gamma) / (k - 1 - R_0);
  let dt = 0.1;
  let Tend = 50;
  let seed = null
@@ -21,6 +20,7 @@
  let chart;
 
  async function simulate() {
+     let tau = (R_0 * gamma) / (k - 1 - R_0);
      let _sim = new Gillespie(A, I_0, tau, gamma, dt, Tend, seed);
      let _ = await _sim.simulate();
      console.log(_);
@@ -45,7 +45,7 @@
          y: { label: "Nodes", grid: true, domain: [0, A.length] },
          x: { label: "Time", domain: [0, Tend] },
          marks: [
-             //Plot.text(["Interpolated Data"], { frameAnchor: "Top" }),
+             //Plot.text(["SIR Data"], { frameAnchor: "Top" }),
              Plot.ruleY([0]),
              Plot.lineY(sim.data, {
                  x: "time",

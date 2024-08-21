@@ -137,7 +137,7 @@ class Gillespie {
           let event_node = rate_cumulative.findIndex((val) => val > node_rate);
           this.event_node_history.push(event_node);
 
-          // Check that we have an event_node
+          // Check that we have an event_node otherwise end sim
           if (event_node === -1) break;
 
           // Find susceptible neighbours of event_node
